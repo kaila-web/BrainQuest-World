@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Educational Game Platform</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Game Selection -->
+  <div id="game-selection">
+    <h1>Select Game Mode</h1>
+    <button onclick="startMathBingo()">Math Bingo</button>
+    <button onclick="startWordSearch()">Word Search</button>
+    <button onclick="startFlashcards()">Flashcards</button>
+    <button onclick="startPuzzleQuest()">Puzzle Quest</button>
+    <button onclick="startHistoryTimeTravel()">History Time Travel</button>
+    <button onclick="startGeoGuessr()">GeoGuessr</button>
+    <button onclick="hostGame()">Host Multiplayer</button>
+    <button onclick="joinGame()">Join Game</button>
+  </div>
+
+  <!-- Avatar Selection -->
+  <div id="avatar-selection">
+    <h2>Choose Your Avatar</h2>
+    <img src="avatar1.png" onclick="selectAvatar('avatar1')" alt="Avatar 1">
+    <img src="avatar2.png" onclick="selectAvatar('avatar2')" alt="Avatar 2">
+    <img src="avatar3.png" onclick="selectAvatar('avatar3')" alt="Avatar 3">
+  </div>
+
+  <!-- Leaderboard Display -->
+  <div id="leaderboard">
+    <h2>Leaderboard</h2>
+    <table id="leaderboard-table">
+      <tr>
+        <th>Rank</th>
+        <th>Name</th>
+        <th>Score</th>
+      </tr>
+    </table>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+  <script src="app.js"></script>
+</body>
+
+/* styles.css */
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background-color: #f0f0f0;
+  padding: 20px;
+}
+
+h1, h2 {
+  color: #333;
+}
+
+#game-selection button {
+  padding: 10px 20px;
+  margin: 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+#avatar-selection img {
+  width: 100px;
+  height: 100px;
+  margin: 10px;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+#leaderboard-table {
+  margin-top: 20px;
+  width: 50%;
+  margin-left: auto;
+  margin-right: auto;
+  border-collapse: collapse;
+}
+
+#leaderboard-table, #leaderboard-table th, #leaderboard-table td {
+  border: 1px solid #ddd;
+}
+
+#leaderboard-table th, #leaderboard-table td {
+  padding: 8px;
+  text-align: center;
+}
+// app.js
+
+// Firebase Configuration
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  databaseURL: "YOUR_DATABASE_URL",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// Global Variables
+let selectedAvatar = '';
+let playerName = 'Player1';  // Example player name
+let gameId = '';
+let playerId = 'Player1_ID';  // Example player ID
+
+// Avatar Selection
+function selectAvatar(avatar) {
+  selectedAvatar = avatar;
+  alert('You selected ' + avatar);
+  firebase.database().ref('players/' + playerId).update({
+    avatar: avatar
+  });
+}
+
+// Hosting a Game
+function hostGame() {
+  gameId = 'game_' + new Date().getTime(); // Unique game ID
+  firebase.database().ref('games/' + gameId).set({
+    host: playerName,
+    status: 'waiting',
+    players: {
+      [playerId]: { name: playerName, score: 0, avatar: selectedAvatar }
+    }
+  });
+  alert('Game Hosted with ID: ' + gameId);
+}
+
+// Joining a Game
+function joinGame() {
+  gameId = prompt("Enter Game ID to Join:");
+  firebase.database().ref('games/' + gameId + '/players').push({
+    name: playerName,
+    score: 0,
+    avatar: selectedAvatar
+  });
+  alert('Joined Game with ID: ' + gameId);
+}
+
+// Math Bingo Game Start
+function startMathBingo() {
+  alert("Starting Math Bingo...");
+  const bingoGrid = generateBingoGrid();
+  displayBingoGrid(bingoGrid);
+}
+
+function generateBingoGrid() {
+  let grid = [];
+  for (let i = 0; i < 5; i++) {
+    grid.push(generateMathProblemRow());
+  }
+  return grid;
+}
+
+function generateMathProblemRow() {
+  let row = [];
+  for (let i = 0; i < 5; i++) {
+    row.push(generateMathProblem());
+  }
+  return row;
+}
+
+function generateMathProblem() {
+  const num1 = Math.floor(Math.random() * 10) + 1;
+  const num2 = Math.floor(Math.random() * 10) + 1;
+  return `${num1} + ${num2}`;
+}
+
+function displayBingoGrid(grid) {
+  let gridHTML = '<table>';
+  for (let row of grid) {
+    gridHTML += '<tr>';
+    for (let cell of row) {
+      gridHTML += `<td>${cell}</td>`;
+    }
+    gridHTML += '</tr>';
+  }
+  gridHTML += '</table>';
+  document.getElementById('game-selection').innerHTML = gridHTML;
+}
+
+// Flashcards Game Start
+const flashcards = [
+  { question: "What is 2 + 2?", answer: "4" },
+  { question: "What is the capital of France?", answer: "Paris" }
+];
+
+function startFlashcards() {
+  flashcards.forEach((card, index) => {
+    displayFlashcard(card, index);
+  });
+}
+
+function displayFlashcard(card, index) {
+  const flashcardContainer = document.createElement('div');
+  flashcardContainer.innerHTML = `
+    <div>
+      <p>Question: ${card.question}</p>
+      <button onclick="showAnswer(${index})">Show Answer</button>
+    </div>
+  `;
+  document.getElementById('game-selection').appendChild(flashcardContainer);
+}
+
+function showAnswer(index) {
+  alert(flashcards[index].answer);
+}
+
+// Word Search Game
+function startWordSearch() {
+  const wordSearch = [
+    ["C", "A", "T", "B", "D"],
+    ["B", "O", "O", "K", "S"],
+    ["P", "E", "N", "N", "A"],
+    ["M", "A", "P", "L", "E"],
+    ["S", "O", "C", "E", "S"]
+  ];
+  displayWordSearch(wordSearch);
+}
+
+function displayWordSearch(grid) {
+  let gridHTML = '<table>';
+  for (let row of grid) {
+    gridHTML += '<tr>';
+    for (let cell of row) {
+      gridHTML += `<td>${cell}</td>`;
+    }
+    gridHTML += '</tr>';
+  }
+  gridHTML += '</table>';
+  document.getElementById('game-selection').innerHTML = gridHTML;
+}
+
+// Puzzle Quest Game
+function startPuzzleQuest() {
+  alert("Starting Puzzle Quest...");
+}
+
+// History Time Travel Game
+function startHistoryTimeTravel() {
+  alert("Starting History Time Travel...");
+}
+
+// GeoGuessr Educational Game
+function startGeoGuessr() {
+  alert("Starting GeoGuessr Educational Version...");
+}
+
+// Update Leaderboard
+function updateLeaderboard() {
+  firebase.database().ref('games/' + gameId + '/players').on('value', snapshot => {
+    const players = snapshot.val();
+    const leaderboardTable = document.getElementById('leaderboard-table');
+    leaderboardTable.innerHTML = ''; // Clear previous leaderboard
+    let rank = 1;
+    for (let player in players) {
+      const row = leaderboardTable.insertRow();
+      row.insertCell(0).innerText = rank++;
+      row.insertCell(1).innerText = players[player].name;
+      row.insertCell(2).innerText = players[player].score;
+    }
+  });
+}
+<html/>
+
+
+
